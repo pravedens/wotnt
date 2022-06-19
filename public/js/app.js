@@ -20108,14 +20108,14 @@ var _hoisted_2 = {
   "class": "form"
 };
 
-var _hoisted_3 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)("Login");
+var _hoisted_3 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)("Вход");
 
 var _hoisted_4 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", {
     "class": "message"
-  }, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)("Not Register?"), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("a", {
+  }, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)("Не зарегистрированы? "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("a", {
     href: "#"
-  }, "Create an account")], -1
+  }, "Регистрация")], -1
   /* HOISTED */
   );
 });
@@ -20198,7 +20198,7 @@ var _hoisted_3 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNod
 var _hoisted_4 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", {
     "class": "message"
-  }, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)("Зарегистрированы?"), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("a", {
+  }, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)("Зарегистрированы? "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("a", {
     href: "#"
   }, "Вход")], -1
   /* HOISTED */
@@ -20603,10 +20603,10 @@ var routes = [{
   children: [{
     path: "/dashboard/userprofile",
     name: "dashboard.userprofile",
-    component: _views_pages_UserProfile__WEBPACK_IMPORTED_MODULE_4__["default"],
-    meta: {
-      middleware: [_middleware__WEBPACK_IMPORTED_MODULE_5__["default"].auth, _middleware__WEBPACK_IMPORTED_MODULE_5__["default"].isSubscribed]
-    }
+    component: _views_pages_UserProfile__WEBPACK_IMPORTED_MODULE_4__["default"] //meta: {
+    //middleware: [Middleware.auth, Middleware.isSubscribed]
+    //}
+
   }]
 }, {
   path: "/userprofile",
@@ -20780,7 +20780,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, ".login-page[data-v-be5ebcfe] {\n  width: 360px;\n  padding: 8% 0 0;\n  margin: auto;\n  display: flex;\n}\n.form[data-v-be5ebcfe] {\n  position: relative;\n  z-index: 1;\n  background-color: var(--color-gray-dark-1);\n  background-image: linear-gradient(rgba(16, 29, 44, 0.93), rgba(16, 29, 44, 0.93)), url(/../../../img/book.jpg);\n  background-size: cover;\n  background-position: center;\n  max-width: 360px;\n  margin: 0 auto 100px;\n  padding: 45px;\n  text-align: center;\n  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 5px 0 rgba(0, 0, 0, 0.2);\n}\n.form.input[data-v-be5ebcfe] {\n  font-family: \"Roboto\", sans-serif;\n  outline: 0;\n  background: #f2f2f2;\n  width: 100%;\n  border: 0;\n  margin: 0 0 15px;\n  box-sizing: border-box;\n  font-size: 14px;\n}\n.form.message[data-v-be5ebcfe] {\n  margin: 15px;\n  color: #b3b3b3;\n  font-size: 12px;\n}\n.form.message a[data-v-be5ebcfe] {\n  color: #c69963;\n  text-decoration: none;\n}", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, ".login-page[data-v-be5ebcfe] {\n  width: 360px;\n  padding: 8% 0 0;\n  margin: auto;\n  display: flex;\n}\n.form[data-v-be5ebcfe] {\n  position: relative;\n  z-index: 1;\n  background-color: var(--color-gray-dark-1);\n  background-image: linear-gradient(rgba(16, 29, 44, 0.93), rgba(16, 29, 44, 0.93)), url(/../../../img/book.png);\n  background-size: cover;\n  background-position: center;\n  max-width: 360px;\n  margin: 0 auto 100px;\n  padding: 45px;\n  text-align: center;\n  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 5px 0 rgba(0, 0, 0, 0.2);\n}\n.form .input[data-v-be5ebcfe] {\n  font-family: \"Roboto\", sans-serif;\n  outline: 0;\n  background: #f2f2f2;\n  width: 100%;\n  border: 0;\n  margin: 0 0 15px;\n  box-sizing: border-box;\n  font-size: 14px;\n}\n.form .message[data-v-be5ebcfe] {\n  margin: 15px;\n  color: #b3b3b3;\n  font-size: 12px;\n}\n.form .message a[data-v-be5ebcfe] {\n  color: #c69963;\n  text-decoration: none;\n}", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -20804,7 +20804,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, ".login-register[data-v-1629088a] {\n  width: 360px;\n  padding: 8% 0 0;\n  margin: auto;\n  display: flex;\n}\n.form[data-v-1629088a] {\n  position: relative;\n  z-index: 1;\n  background-color: var(--color-gray-dark-1);\n  background-image: linear-gradient(rgba(16, 29, 44, 0.93), rgba(16, 29, 44, 0.93)), url(/../../../img/book.jpg);\n  background-size: cover;\n  background-position: center;\n  max-width: 360px;\n  margin: 0 auto 100px;\n  padding: 45px;\n  text-align: center;\n  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 5px 0 rgba(0, 0, 0, 0.2);\n}\n.form.input[data-v-1629088a] {\n  font-family: \"Roboto\", sans-serif;\n  outline: 0;\n  background: #f2f2f2;\n  width: 100%;\n  border: 0;\n  margin: 15px 0 15px 0;\n  box-sizing: border-box;\n  font-size: 14px;\n}\n.form.message[data-v-1629088a] {\n  margin: 15px;\n  color: #b3b3b3;\n  font-size: 12px;\n}\n.form.message a[data-v-1629088a] {\n  color: #c69963;\n  text-decoration: none;\n}", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, ".register-page[data-v-1629088a] {\n  width: 360px;\n  padding: 8% 0 0;\n  margin: auto;\n  display: flex;\n}\n.form[data-v-1629088a] {\n  position: relative;\n  z-index: 1;\n  background-color: var(--color-gray-dark-1);\n  background-image: linear-gradient(rgba(16, 29, 44, 0.93), rgba(16, 29, 44, 0.93)), url(/../../../img/book.png);\n  background-size: cover;\n  background-position: center;\n  max-width: 360px;\n  margin: 0 auto 100px;\n  padding: 45px;\n  text-align: center;\n  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), 0 5px 0 rgba(0, 0, 0, 0.2);\n}\n.form .input[data-v-1629088a] {\n  font-family: \"Roboto\", sans-serif;\n  outline: 0;\n  background: #f2f2f2;\n  width: 100%;\n  border: 0;\n  margin: 15px 0 15px 0;\n  box-sizing: border-box;\n  font-size: 14px;\n}\n.form .message[data-v-1629088a] {\n  margin: 15px;\n  color: #b3b3b3;\n  font-size: 12px;\n}\n.form .message a[data-v-1629088a] {\n  color: #c69963;\n  text-decoration: none;\n}", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -20852,7 +20852,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.input[data-v-4fa9c7ee] {\n        width: 100%;\n        border: 1px solid teal;\n        padding: 10px 15px;\n        margin: 15px 0 15px 0;\n}\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.input[data-v-4fa9c7ee] {\n        width: 100%;\n        border: 1px solid teal;\n        padding: 10px 15px;\n        margin-top: 15px;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
