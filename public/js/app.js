@@ -19935,11 +19935,17 @@ __webpack_require__.r(__webpack_exports__);
   data: function data() {
     return {
       user: {
+        name: "",
         email: "",
         password: "",
         password_confirmation: ""
       }
     };
+  },
+  methods: {
+    register: function register() {
+      this.$store.dispatch('auth/registerUser', this.user);
+    }
   }
 });
 
@@ -20214,9 +20220,18 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("form", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_my_input, {
     type: "text",
+    placeholder: "username",
+    modelValue: _ctx.user.name,
+    "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
+      return _ctx.user.name = $event;
+    })
+  }, null, 8
+  /* PROPS */
+  , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_my_input, {
+    type: "text",
     placeholder: "email address",
     modelValue: _ctx.user.email,
-    "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
+    "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
       return _ctx.user.email = $event;
     })
   }, null, 8
@@ -20225,7 +20240,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     type: "text",
     placeholder: "password",
     modelValue: _ctx.user.password,
-    "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
+    "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
       return _ctx.user.password = $event;
     })
   }, null, 8
@@ -20234,13 +20249,14 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     type: "text",
     placeholder: "password",
     modelValue: _ctx.user.password_confirmation,
-    "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
+    "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
       return _ctx.user.password_confirmation = $event;
     })
   }, null, 8
   /* PROPS */
   , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_my_button, {
-    type: "submit"
+    type: "submit",
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)($options.register, ["prevent"])
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
       return [_hoisted_3];
@@ -20248,7 +20264,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_router_link, {
+  }, 8
+  /* PROPS */
+  , ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_router_link, {
     to: "/login"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -20676,12 +20694,36 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+function _objectDestructuringEmpty(obj) { if (obj == null) throw new TypeError("Cannot destructure undefined"); }
+
 
 var state = {
   userDetails: {},
   isLoggedIn: false
 };
-var actions = {};
+var actions = {
+  registerUser: function registerUser(_ref, user) {
+    _objectDestructuringEmpty(_ref);
+
+    return new Promise(function (resolve, reject) {
+      axios__WEBPACK_IMPORTED_MODULE_0___default().post('/api/register', {
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        password_confirmation: user.password_confirmation
+      }).then(function (response) {
+        if (response.data) {
+          window.location.replace("/login");
+          resolve(response);
+        } else {
+          reject(response);
+        }
+      })["catch"](function (error) {
+        reject(error);
+      });
+    });
+  }
+};
 var mutations = {};
 var getters = {
   loggedIn: function loggedIn(state) {
