@@ -1,11 +1,12 @@
+<script setup lang="ts">
+definePageMeta({
+  middleware: 'sanctum:auth',
+});
+</script>
+
 <template>
-  <main>
-    <h1>Слово Истины — Нижний Тагил</h1>
-
-    <p>Локальный сайт работает.</p>
-
-    <NuxtLink to="/auth/login">
-      Войти в личный кабинет
-    </NuxtLink>
-  </main>
+  <div>
+    <h1>Главная</h1>
+    <NuxtLink to="/dashboard">Перейти в Dashboard</NuxtLink>
+  </div>
 </template>

@@ -18,6 +18,8 @@ const handleLogout = async () => {
     <h1>Dashboard</h1>
     <p>Привет, {{ user?.name ?? 'гость' }}</p>
     <p v-if="user?.email">Email: {{ user.email }}</p>
+    <p v-if="user?.email_verified_at">Email подтверждён</p>
+    <p v-else>Email не подтверждён</p>
     <button type="button" @click="handleLogout">Выйти</button>
   </div>
 </template>

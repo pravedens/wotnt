@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import type { AuthUser } from '~/types/auth';
 
 definePageMeta({
-  layout: 'auth', // опционально, если есть отдельный layout для auth
-  middleware: 'sanctum:guest', // только для неавторизованных
+  layout: 'auth',
+  middleware: 'sanctum:guest',
 });
 
-const { login } = useSanctumAuth();
+const { login } = useSanctumAuth<AuthUser>();
 const router = useRouter();
 
 const form = reactive({
@@ -40,37 +41,23 @@ const handleLogin = async () => {
   <div class="auth-form">
     <h1>Вход</h1>
 
-    <div v-if="errors.general" class="error-banner">
-      {{ errors.general[0] }}
-    </div>
+    <div v-if="errors.general" class="error-banner">{{ errors.general[0] }}</div>
 
     <form @submit.prevent="handleLogin">
       <div class="field">
         <label for="email">Email</label>
-        <input
-          id="email"
-          v-model="form.email"
-          type="email"
-          autocomplete="email"
-          :disabled="isLoading"
-        />
+        <input id="email" v-model="form.email" type="email" autocomplete="email" :disabled="isLoading" />
         <span v-if="errors.email" class="error">{{ errors.email[0] }}</span>
       </div>
 
       <div class="field">
         <label for="password">Пароль</label>
-        <input
-          id="password"
-          v-model="form.password"
-          type="password"
-          autocomplete="current-password"
-          :disabled="isLoading"
-        />
+        <input id="password" v-model="form.password" type="password" autocomplete="current-password" :disabled="isLoading" />
         <span v-if="errors.password" class="error">{{ errors.password[0] }}</span>
       </div>
 
       <div class="field-checkbox">
-        <input id="remember" v-model="form.remember" type="checkbox" />
+        <input id="remember" v-model="form.remember" type="checkbox" :disabled="isLoading" />
         <label for="remember">Запомнить меня</label>
       </div>
 

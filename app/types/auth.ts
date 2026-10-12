@@ -8,3 +8,15 @@ export interface AuthUser {
   updated_at?: string;
   // добавьте поля, которые возвращает Laravel
 }
+
+export interface LoginResponse {
+  two_factor: boolean;
+}
+
+export interface ForgotPasswordResponse {
+  status: string;
+}
+
+export interface RegisterResponse {
+  user: AuthUser;
+}

@@ -14,7 +14,14 @@ export default defineNuxtConfig({
   modules: ["nuxt-auth-sanctum"],
   sanctum: {
     baseUrl: 'https://api.wotnt.test:8443',
-
+    origin: 'https://wotnt.test:8443',
+    mode: 'cookie',
+    endpoints: {
+      login: '/login',
+      logout: '/logout',
+      user: '/api/user',
+      csrf: '/sanctum/csrf-cookie',
+    },
     redirect: {
       // Куда редиректить неавторизованных при попытке зайти на защищённую страницу
       onAuthOnly: '/auth/login',
@@ -29,7 +36,7 @@ export default defineNuxtConfig({
       onLogout: '/auth/login',
 
       // Опционально: запоминать запрошенный URL, чтобы вернуть пользователя туда после входа
-      keepRequestedRoute: false,
+      keepRequestedRoute: true,
     },
   },
 });
