@@ -1,26 +1,8 @@
 <template>
-  <div class="auth-layout">
-    <div class="auth-container">
+  <!-- Центрирование + стеклянная карточка -->
+  <div class="min-h-[calc(100vh-4rem)] w-full flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-2xl p-8 text-white">
       <slot />
     </div>
   </div>
 </template>
-
-<style scoped>
-.auth-layout {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-}
-
-.auth-container {
-  width: 100%;
-  max-width: 420px;
-  padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-</style>

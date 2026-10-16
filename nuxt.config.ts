@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["nuxt-auth-sanctum"],
+  modules: ["nuxt-auth-sanctum", '@nuxtjs/tailwindcss'],
   sanctum: {
     baseUrl: "https://api.wotnt.test:8443",
     origin: "https://wotnt.test:8443",
