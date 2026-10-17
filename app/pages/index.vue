@@ -35,23 +35,6 @@ const isAuthed = computed(() => !!user.value);
           </svg>
         </NuxtLink>
 
-        <template v-else>
-          <NuxtLink
-            to="/auth/register"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg shadow-purple-500/20 transition"
-          >
-            Начать бесплатно
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </NuxtLink>
-          <NuxtLink
-            to="/auth/login"
-            class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold text-gray-200 border border-white/20 hover:text-white hover:bg-white/10 transition"
-          >
-            У меня есть аккаунт
-          </NuxtLink>
-        </template>
       </div>
     </section>
 
