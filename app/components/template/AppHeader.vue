@@ -10,10 +10,6 @@ const isUserMenuOpen = ref(false);
 
 const navigation = [
   { name: 'Главная', href: '/' },
-  { name: 'Возможности', href: '/features' },
-  { name: 'Тарифы', href: '/pricing' },
-  { name: 'О нас', href: '/about' },
-  { name: 'Контакты', href: '/contacts' },
 ];
 
 const closeMobileMenu = () => {

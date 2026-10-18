@@ -10,11 +10,12 @@ const banners = useBanners();
 const client = useSanctumClient();
 
 const refreshing = ref(false);
-
-/** Ключ баннера о неподтверждённом email */
 const EMAIL_UNVERIFIED_KEY = 'email-unverified';
 
-const refreshUser = async () => {
+// Переменная для отслеживания времени ухода со вкладки
+let lastHiddenTime = 0;
+
+const refreshUser = async (showError = true) => {
   if (refreshing.value) return;
   refreshing.value = true;
 
@@ -22,18 +23,14 @@ const refreshUser = async () => {
     await refreshIdentity();
   } catch (error) {
     console.error('Не удалось обновить пользователя:', error);
-    banners.error('Не удалось получить актуальный статус почты.');
+    if (showError) {
+      banners.error('Не удалось получить актуальный статус почты.');
+    }
   } finally {
     refreshing.value = false;
   }
 };
 
-/**
- * Синхронизация баннера со статусом email.
- * Баннер:
- *   - появляется, если email не подтверждён;
- *   - исчезает, если подтверждён.
- */
 const syncEmailBanner = () => {
   if (!user.value) {
     banners.removeByKey(EMAIL_UNVERIFIED_KEY);
@@ -45,30 +42,18 @@ const syncEmailBanner = () => {
     return;
   }
 
-  // Показываем/обновляем баннер о неподтверждённом email
   banners.upsertByKey(EMAIL_UNVERIFIED_KEY, {
     type: 'warning',
     title: 'Email не подтверждён',
     message: 'Подтвердите email, чтобы получить полный доступ к функциям.',
     persistent: true,
-    actions: [
-      {
-        label: 'Подтвердить email',
-        variant: 'primary',
-        handler: async () => {
-          await resendVerification();
-        },
-      },
-    ],
   });
 };
 
-/** Отправить письмо повторно */
 const resendVerification = async () => {
   try {
     await client('/email/verification-notification', { method: 'POST' });
     banners.success('Письмо отправлено. Проверьте почту.');
-    // Баннер warning оставим — email всё ещё не подтверждён
   } catch (error: any) {
     const msg =
       error.response?._data?.message ??
@@ -77,21 +62,34 @@ const resendVerification = async () => {
   }
 };
 
-const handleFocus = () => {
-  void refreshUser();
+// --- ЛОГИКА ОБНОВЛЕНИЯ ПРИ ВОЗВРАТЕ НА ВКЛАДКУ ---
+
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'hidden') {
+    // Запоминаем время, когда пользователь ушёл со вкладки
+    lastHiddenTime = Date.now();
+  } else if (document.visibilityState === 'visible') {
+    // Если прошло больше 2 секунд, обновляем данные (без спама ошибками)
+    if (Date.now() - lastHiddenTime > 2000) {
+      refreshUser(false); 
+    }
+  }
 };
 
 onMounted(async () => {
+  // Первичная загрузка
   await refreshUser();
   syncEmailBanner();
-  window.addEventListener('focus', handleFocus);
+  
+  // Подписываемся на изменение видимости вкладки
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener('focus', handleFocus);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 
-// Обновление баннера при изменении user (после refreshIdentity)
+// Обновление баннера при изменении user
 watch(user, () => {
   syncEmailBanner();
 });
@@ -163,25 +161,37 @@ const handleLogout = async () => {
         Email подтверждён
       </div>
 
-      <div v-else-if="user" class="space-y-3">
-        <div class="flex items-center gap-3 p-3 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-200 text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <div v-else-if="user" class="space-y-4">
+        <!-- Плашка о том, что email не подтверждён -->
+        <div class="flex items-start gap-3 p-4 bg-amber-500/20 border border-amber-500/50 rounded-lg text-amber-200 text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          Email не подтверждён
+          <div>
+            <p class="font-semibold mb-1">Требуется подтверждение</p>
+            <p class="opacity-90">
+              Мы отправили письмо на <span class="font-medium text-white">{{ user.email }}</span>. 
+              Перейдите по ссылке в письме, чтобы активировать аккаунт.
+            </p>
+          </div>
         </div>
 
-        <!-- Кнопка "Подтвердить email" -->
-        <button
-          type="button"
-          @click="resendVerification"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg shadow-purple-500/20 transition"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-          Подтвердить email
-        </button>
+        <!-- Блок с кнопкой и подсказкой -->
+        <div class="pt-2">
+          <p class="text-xs text-gray-400 mb-3">
+            Не получили письмо или ссылка устарела? Проверьте папку «Спам» или запросите новое письмо.
+          </p>
+          <button
+            type="button"
+            @click="resendVerification"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-white/10 border border-white/20 hover:bg-white/20 transition"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Отправить письмо повторно
+          </button>
+        </div>
       </div>
     </div>
 
