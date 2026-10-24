@@ -36,12 +36,14 @@ const footerLinks = [
         <!-- Логотип и описание -->
         <div class="md:col-span-1">
           <NuxtLink to="/" class="flex items-center gap-2 group">
-            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <span class="text-white font-bold text-lg tracking-wide">WoW</span>
+            <img
+              src="/icons/logo-header-72x72.png"
+              alt="Слово Истины"
+              class="w-12 h-12 rounded-lg object-contain shadow-lg shadow-purple-500/30 group-hover:scale-105 transition"
+            />
+            <span class="text-white font-bold text-lg tracking-wide"
+              >Слово Истины</span
+            >
           </NuxtLink>
           <p class="mt-4 text-sm text-gray-300 leading-relaxed">
             Короткое описание вашего продукта или сайта.
@@ -70,7 +72,7 @@ const footerLinks = [
       <!-- Нижняя строка -->
       <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
         <p class="text-sm text-gray-400">
-          © {{ year }} WoW. Все права защищены.
+          © {{ year }} Местная религиозная организация Церковь Христиан Веры Евангельской (пятидесятников) "СЛОВО ИСТИНЫ" г.Нижнего Тагила. Все права защищены.
         </p>
         <div class="flex items-center gap-4">
           <!-- Соцсети (замените ссылки на свои) -->
@@ -79,7 +81,7 @@ const footerLinks = [
               <path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/>
             </svg>
           </a>
-          <a href="#" class="text-gray-400 hover:text-white transition" aria-label="VK">
+          <a href="https://vk.ru/truechurch" class="text-gray-400 hover:text-white transition" aria-label="VK">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M13.162 18.994c.609 0 .858-.406.851-.915-.031-1.917.714-2.949 2.059-1.604 1.488 1.488 1.796 2.519 3.603 2.519h3.2c.808 0 1.126-.26 1.126-.668 0-.863-1.421-2.386-2.625-3.504-1.686-1.565-1.765-1.602-.313-3.486 1.801-2.339 4.157-5.336 2.073-5.336h-3.981c-.772 0-.828.435-1.103 1.083-.995 2.347-2.886 5.387-3.604 4.922-.751-.485-.407-2.406-.35-5.261.015-.754.011-1.271-1.141-1.539-.629-.145-1.241-.205-1.809-.205-2.273 0-3.841.953-2.95 1.119 1.571.293 1.42 3.692 1.054 5.16-.638 2.556-3.036-2.024-4.035-4.305-.241-.548-.315-.974-1.175-.974H.539c-.315 0-.592.261-.592.782 0 .747.961 4.615 4.298 9.729 2.225 3.404 4.842 5.037 7.117 5.037z"/>
             </svg>

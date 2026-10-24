@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import type { AuthUser } from "~/types/auth";
 
 const { user, logout } = useSanctumAuth<AuthUser>();
@@ -7,6 +7,11 @@ const router = useRouter();
 
 const isMobileMenuOpen = ref(false);
 const isUserMenuOpen = ref(false);
+
+// --- НОВОЕ: Ссылки на элементы для мобильного меню ---
+const mobileMenuRef = ref<HTMLElement | null>(null);
+const mobileButtonRef = ref<HTMLElement | null>(null);
+// --------------------------------------------------
 
 const navigation = [{ name: "Главная", href: "/" }];
 
@@ -29,13 +34,28 @@ const handleLogout = async () => {
   await router.push("/auth/login");
 };
 
-/** Закрываем меню пользователя при клике вне его */
+/** Закрываем меню при клике вне его */
 const userMenuRef = ref<HTMLElement | null>(null);
+
 const onDocumentClick = (e: MouseEvent) => {
-  if (!isUserMenuOpen.value) return;
   const target = e.target as Node;
-  if (userMenuRef.value && !userMenuRef.value.contains(target)) {
-    closeUserMenu();
+
+  // Проверка для десктопного меню пользователя
+  if (isUserMenuOpen.value) {
+    if (userMenuRef.value && !userMenuRef.value.contains(target)) {
+      closeUserMenu();
+    }
+  }
+
+  // --- НОВОЕ: Проверка для мобильного меню ---
+  if (isMobileMenuOpen.value) {
+    // Если клик НЕ внутри самого меню И НЕ по кнопке-бургеру — закрываем
+    const isClickInsideMenu = mobileMenuRef.value?.contains(target);
+    const isClickOnButton = mobileButtonRef.value?.contains(target);
+
+    if (!isClickInsideMenu && !isClickOnButton) {
+      closeMobileMenu();
+    }
   }
 };
 
@@ -58,25 +78,14 @@ onBeforeUnmount(() => {
             class="flex items-center gap-2 group"
             @click="closeMobileMenu"
           >
-            <div
-              class="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:scale-105 transition"
+            <img
+              src="/icons/logo-header-72x72.png"
+              alt="Слово Истины"
+              class="w-12 h-12 rounded-lg object-contain shadow-lg shadow-purple-500/30 group-hover:scale-105 transition"
+            />
+            <span class="text-white font-bold text-lg tracking-wide"
+              >Слово Истины</span
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-5 h-5 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-            </div>
-            <span class="text-white font-bold text-lg tracking-wide">WoW</span>
           </NuxtLink>
 
           <!-- Десктоп-меню -->
@@ -106,7 +115,7 @@ onBeforeUnmount(() => {
                 to="/auth/register"
                 class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg shadow-purple-500/20 transition"
               >
-                Начать
+                Регистрация
               </NuxtLink>
             </template>
 
@@ -237,7 +246,8 @@ onBeforeUnmount(() => {
 
           <!-- Мобильный бургер -->
           <button
-            @click="isMobileMenuOpen = !isMobileMenuOpen"
+            ref="mobileButtonRef"
+            @click.stop="isMobileMenuOpen = !isMobileMenuOpen"
             class="md:hidden inline-flex items-center justify-center p-2 rounded-lg text-gray-200 hover:bg-white/10 transition"
             aria-label="Открыть меню"
           >
@@ -287,6 +297,7 @@ onBeforeUnmount(() => {
     >
       <div
         v-if="isMobileMenuOpen"
+        ref="mobileMenuRef"
         class="md:hidden bg-[#1e1b4b]/95 backdrop-blur-md border-b border-white/10"
       >
         <div class="px-4 pt-2 pb-4 space-y-1">
@@ -370,7 +381,7 @@ onBeforeUnmount(() => {
               class="block px-4 py-2.5 rounded-lg text-base font-semibold text-center text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg transition"
               @click="closeMobileMenu"
             >
-              Начать
+              Регистрация
             </NuxtLink>
           </template>
         </div>
