@@ -3,19 +3,19 @@ const year = new Date().getFullYear();
 
 const footerLinks = [
   {
-    title: 'Продукт',
+    title: 'События',
     links: [
-      { name: 'Возможности', href: '/features' },
-      { name: 'Тарифы', href: '/pricing' },
-      { name: 'Документация', href: '/docs' },
+      { name: 'Проповеди', href: '/sermons' },
+      { name: 'Календарь', href: '/events' },
     ],
   },
   {
-    title: 'Компания',
+    title: 'Церковь',
     links: [
       { name: 'О нас', href: '/about' },
-      { name: 'Блог', href: '/blog' },
+      { name: 'Служители', href: '/ministers' },
       { name: 'Контакты', href: '/contacts' },
+      { name: 'Помощь', href: '/help' },
     ],
   },
   {

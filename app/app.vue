@@ -15,5 +15,8 @@
 
     <!-- Глобальные баннеры поверх всего -->
     <TemplateBannersHost />
+
+    <!-- Внедрение PWA манифеста и мета-тегов -->
+    <NuxtPwaManifest />
   </div>
 </template>

@@ -30,6 +30,8 @@ const form = reactive({
   gender: "",
 });
 
+const hadConsent = ref(false); // Запоминаем, было ли согласие в БД
+
 // Заполняем форму при загрузке, если данные уже есть
 onMounted(async () => {
   await refreshIdentity();
@@ -43,6 +45,10 @@ onMounted(async () => {
     form.about = user.value.about ?? "";
     form.marital_status = user.value.marital_status ?? "";
     form.gender = user.value.gender ?? "";
+    consentGiven.value = user.value.consent_pd ?? false;
+
+    // Запоминаем текущее состояние согласия из БД
+    hadConsent.value = user.value.consent_pd ?? false;
     consentGiven.value = user.value.consent_pd ?? false;
   }
 });
@@ -81,22 +87,48 @@ const uploadAvatar = async () => {
 
 // --- Сохранение текстовых данных ---
 const saveProfile = async () => {
-  if (!consentGiven.value) {
-    banners.error("Необходимо согласие на обработку персональных данных.");
+  if (!consentGiven.value && !hadConsent.value) {
+    banners.error('Необходимо согласие на обработку персональных данных.');
     return;
   }
 
   isSaving.value = true;
   try {
-    await client("/api/user/extended-profile", {
-      method: "PUT",
+    await client('/api/user/extended-profile', {
+      method: 'PUT',
       body: {
         ...form,
         consent_pd: consentGiven.value,
       },
     });
+    
+    // Обновляем данные пользователя с бэкенда
     await refreshIdentity();
-    banners.success("Профиль обновлён!");
+    
+    if (user.value) {
+      // ⚠️ СИНХРОНИЗИРУЕМ ЛОКАЛЬНОЕ СОСТОЯНИЕ С БАЗОЙ
+      hadConsent.value = user.value.consent_pd ?? false;
+      
+      // Если согласие было отозвано, очищаем форму
+      if (!user.value.consent_pd) {
+        // Сбрасываем поля формы
+        form.last_name = '';
+        form.middle_name = '';
+        form.phone = '';
+        form.city = '';
+        form.church_name = '';
+        form.birth_date = '';
+        form.about = '';
+        form.marital_status = '';
+        form.gender = '';
+      }
+    }
+
+    if (!consentGiven.value) {
+      banners.success('Согласие отозвано. Данные профиля и фото удалены.');
+    } else {
+      banners.success('Профиль обновлён!');
+    }
   } catch (error: any) {
     const serverErrors = error.response?._data?.errors;
     if (serverErrors) {
@@ -227,7 +259,7 @@ const saveProfile = async () => {
                 <p class="text-xs text-gray-400">
                   Я согласен на обработку следующих данных: Фамилия, Имя,
                   Отчество, Фото, Телефон, Город, Церковь, Дата рождения, О
-                  себе, Семейное положение, Пол. Цель: отображение в профиле на
+                  себе, Семейное положение, Пол. Цель: отображение данных на
                   сайте.
                   <NuxtLink to="/privacy" class="text-blue-300 hover:underline"
                     >Политика конфиденциальности</NuxtLink
@@ -349,7 +381,7 @@ const saveProfile = async () => {
           <div class="mt-6 flex justify-end">
             <button
               @click="saveProfile"
-              :disabled="isSaving || !consentGiven"
+              :disabled="isSaving || (!consentGiven && !hadConsent)"
               class="px-6 py-2.5 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg disabled:opacity-50 transition"
             >
               {{ isSaving ? "Сохранение..." : "Сохранить изменения" }}
