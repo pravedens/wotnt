@@ -14,6 +14,11 @@ export default defineNuxtConfig({
   },
 
   modules: ["nuxt-auth-sanctum", "@nuxtjs/tailwindcss", "@vite-pwa/nuxt"],
+
+  tailwindcss: {
+    cssPath: "~/assets/css/tailwind.css",
+  },
+
   pwa: {
     // Регистрируем Service Worker и включаем автообновление
     registerType: "autoUpdate",
