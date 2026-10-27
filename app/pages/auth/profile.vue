@@ -88,46 +88,46 @@ const uploadAvatar = async () => {
 // --- Сохранение текстовых данных ---
 const saveProfile = async () => {
   if (!consentGiven.value && !hadConsent.value) {
-    banners.error('Необходимо согласие на обработку персональных данных.');
+    banners.error("Необходимо согласие на обработку персональных данных.");
     return;
   }
 
   isSaving.value = true;
   try {
-    await client('/api/user/extended-profile', {
-      method: 'PUT',
+    await client("/api/user/extended-profile", {
+      method: "PUT",
       body: {
         ...form,
         consent_pd: consentGiven.value,
       },
     });
-    
+
     // Обновляем данные пользователя с бэкенда
     await refreshIdentity();
-    
+
     if (user.value) {
       // ⚠️ СИНХРОНИЗИРУЕМ ЛОКАЛЬНОЕ СОСТОЯНИЕ С БАЗОЙ
       hadConsent.value = user.value.consent_pd ?? false;
-      
+
       // Если согласие было отозвано, очищаем форму
       if (!user.value.consent_pd) {
         // Сбрасываем поля формы
-        form.last_name = '';
-        form.middle_name = '';
-        form.phone = '';
-        form.city = '';
-        form.church_name = '';
-        form.birth_date = '';
-        form.about = '';
-        form.marital_status = '';
-        form.gender = '';
+        form.last_name = "";
+        form.middle_name = "";
+        form.phone = "";
+        form.city = "";
+        form.church_name = "";
+        form.birth_date = "";
+        form.about = "";
+        form.marital_status = "";
+        form.gender = "";
       }
     }
 
     if (!consentGiven.value) {
-      banners.success('Согласие отозвано. Данные профиля и фото удалены.');
+      banners.success("Согласие отозвано. Данные профиля и фото удалены.");
     } else {
-      banners.success('Профиль обновлён!');
+      banners.success("Профиль обновлён!");
     }
   } catch (error: any) {
     const serverErrors = error.response?._data?.errors;
@@ -175,6 +175,20 @@ const saveProfile = async () => {
             {{ user?.name }}
           </h2>
           <p class="text-sm text-gray-400 mb-4">{{ user?.email }}</p>
+
+          <div
+            v-if="user?.roles?.length"
+            class="flex flex-wrap justify-center gap-2 mt-3 mb-4"
+          >
+            <span
+              v-for="role in user.roles"
+              :key="role.value"
+              class="inline-block px-3 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30"
+              :title="role.value"
+            >
+              {{ role.label }}
+            </span>
+          </div>
 
           <!-- Кнопки загрузки (только если бэкенд разрешил) -->
           <template v-if="user?.can_upload_avatar">

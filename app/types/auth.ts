@@ -1,9 +1,15 @@
 // app/types/auth.ts
+export interface RoleItem {
+  value: string;
+  label: string;
+}
+
 export interface AuthUser {
   id: number;
   name: string;
   email: string;
   email_verified_at?: string | null;
+  roles: RoleItem[];
   created_at?: string;
   updated_at?: string;
   last_name: string | null;

@@ -49,7 +49,13 @@ const footerLinks = [
             >
           </NuxtLink>
           <p class="mt-4 text-sm text-gray-300 leading-relaxed">
-            Короткое описание вашего продукта или сайта.
+            Юридический адрес: г. Нижний Тагил, ул. Чехова, 10
+          </p>
+          <p class="mt-4 text-sm text-gray-300 leading-relaxed">
+            ОГРН: 1096600001794
+          </p>
+          <p class="mt-4 text-sm text-gray-300 leading-relaxed">
+            ИНН: 6623060094
           </p>
         </div>
 
