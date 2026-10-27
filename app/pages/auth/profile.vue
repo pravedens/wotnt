@@ -5,7 +5,7 @@ import type { AuthUser } from "~/types/auth";
 // а не auth-лейаут (карточку по центру)
 definePageMeta({
   layout: "default",
-  middleware: "sanctum:auth",
+  middleware: ["sanctum:auth", "verified"],
 });
 
 const { user, refreshIdentity } = useSanctumAuth<AuthUser>();

@@ -193,6 +193,7 @@ onBeforeUnmount(() => {
                     </NuxtLink>
 
                     <NuxtLink
+                      v-if="user?.email_verified_at"
                       to="/auth/profile"
                       class="flex items-center gap-3 px-4 py-2 text-sm text-gray-200 hover:text-white hover:bg-white/10 transition"
                       @click="closeUserMenu"
@@ -352,6 +353,7 @@ onBeforeUnmount(() => {
               Dashboard
             </NuxtLink>
             <NuxtLink
+              v-if="user?.email_verified_at"
               to="/auth/profile"
               class="block px-4 py-2.5 rounded-lg text-base font-medium text-gray-200 hover:text-white hover:bg-white/10 transition"
               @click="closeMobileMenu"
