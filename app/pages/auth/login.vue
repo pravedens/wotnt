@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import type { AuthUser } from "~/types/auth";
+import type { AuthUser, LoginResponse } from "~/types/auth";
 
 definePageMeta({
   layout: "auth",
   middleware: "sanctum:guest",
 });
 
-const { login } = useSanctumAuth<AuthUser>();
+// ✅ Убираем login(), оставляем refreshIdentity для загрузки пользователя после 2FA
+const { refreshIdentity } = useSanctumAuth<AuthUser>();
+const client = useSanctumClient(); // ✅ Прямые запросы к API
 const router = useRouter();
 
 const banners = useBanners();
@@ -21,10 +23,16 @@ const form = reactive({
 const errors = ref<Record<string, string[]>>({});
 const isLoading = ref(false);
 
+// --- Состояние для 2FA ---
+const needs2FA = ref(false);
+const twoFactorCode = ref("");
+const isVerifying2FA = ref(false);
+
 const fieldLabels: Record<string, string> = {
   email: "Email",
   password: "Пароль",
   general: "Ошибка",
+  code: "Код 2FA",
 };
 
 /** Выводит ошибки в баннеры, игнорируя дубли */
@@ -37,6 +45,7 @@ const showErrorsAsBanners = (errs: Record<string, string[]>) => {
   }
 };
 
+// --- Шаг 1: Вход (логин + пароль) ---
 const handleLogin = async () => {
   errors.value = {};
   isLoading.value = true;
@@ -50,25 +59,41 @@ const handleLogin = async () => {
     return;
   }
 
-  // 2. Отправка на сервер
+  // 2. Отправка на сервер через client напрямую
   try {
-    await login(form);
+    const response = await client<LoginResponse>("/login", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: {
+        email: form.email,
+        password: form.password,
+        remember: form.remember,
+      },
+    });
+
+    // ✅ Если требуется 2FA — показываем форму ввода кода
+    if (response?.two_factor) {
+      needs2FA.value = true;
+      isLoading.value = false;
+      return;
+    }
+
+    // Если 2FA нет — загружаем пользователя и идём на dashboard
+    await refreshIdentity();
     await router.push("/dashboard");
   } catch (error: any) {
     const serverErrors = error.response?._data?.errors;
 
-    // ⚠️ ЛОВИМ ОШИБКУ АВТОРИЗАЦИИ
-    // Если Fortify вернул ошибку в поле email (неверные данные)
+    // Ловим ошибку авторизации
     if (
       serverErrors &&
       serverErrors.email &&
       serverErrors.email[0]?.includes("учетные данные")
     ) {
-      // Переназначаем её в общую ошибку
       errors.value = { general: ["Неверный email или пароль."] };
       banners.error("Неверный email или пароль.");
-
-      // Очищаем поле email от красной рамки (но оставляем ошибку общей)
       delete serverErrors.email;
     } else if (serverErrors) {
       errors.value = serverErrors;
@@ -83,12 +108,108 @@ const handleLogin = async () => {
     isLoading.value = false;
   }
 };
+
+// --- Шаг 2: Проверка кода 2FA ---
+const handleTwoFactor = async () => {
+  if (!twoFactorCode.value.trim()) {
+    errors.value = { code: ["Введите код из приложения"] };
+    return;
+  }
+
+  errors.value = {};
+  isVerifying2FA.value = true;
+
+  try {
+    await client("/two-factor-challenge", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+      body: { code: twoFactorCode.value },
+    });
+
+    // Успех: загружаем пользователя и переходим на dashboard
+    await refreshIdentity();
+    await router.push("/dashboard");
+  } catch (error: any) {
+    const serverErrors = error.response?._data?.errors;
+    if (serverErrors?.code) {
+      errors.value = { code: serverErrors.code };
+      showErrorsAsBanners({ code: serverErrors.code });
+    } else {
+      const msg =
+        error.response?._data?.message ?? "Неверный код. Попробуйте снова.";
+      errors.value = { code: [msg] };
+      banners.error(msg);
+    }
+  } finally {
+    isVerifying2FA.value = false;
+  }
+};
 </script>
+
 <template>
   <div>
-    <h1 class="text-3xl font-bold text-center mb-8">Вход</h1>
+    <h1 class="text-3xl font-bold text-center mb-8">
+      {{ needs2FA ? "Двухфакторная аутентификация" : "Вход" }}
+    </h1>
 
-    <form @submit.prevent="handleLogin" class="space-y-5">
+    <!-- ===== ФОРМА 2FA ===== -->
+    <form v-if="needs2FA" @submit.prevent="handleTwoFactor" class="space-y-5">
+      <div class="mt-4 pt-3 border-t border-blue-500/30">
+        <p class="opacity-90">
+          вводите email и пароль. Но после этого сайт попросит
+          <strong>6-значный код</strong>. Откройте приложение на телефоне,
+          найдите в списке "Другие сервисы" наш сайт и введите цифры, которые
+          там показаны. Код меняется каждые 30 секунд — если не успели, просто
+          подождите новый.
+        </p>
+        <p class="mt-2 opacity-90">
+          <strong>Если потеряли телефон:</strong> на странице ввода кода вместо
+          6 цифр введите один из кодов восстановления, которые вы сохранили.
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <label for="code" class="block text-sm font-medium text-gray-200">
+          Код подтверждения
+        </label>
+        <input
+          id="code"
+          v-model="twoFactorCode"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          :disabled="isVerifying2FA"
+          class="w-full px-4 py-2.5 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 disabled:opacity-70 text-center tracking-widest text-lg"
+          :class="{ 'border-red-500 ring-1 ring-red-500': errors.code }"
+          placeholder="123456"
+          maxlength="6"
+        />
+        <span v-if="errors.code" class="text-xs text-red-300 block">
+          {{ errors.code[0] }}
+        </span>
+      </div>
+
+      <button
+        type="submit"
+        :disabled="isVerifying2FA"
+        class="w-full py-3 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-900 transition duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {{ isVerifying2FA ? "Проверка..." : "Подтвердить" }}
+      </button>
+
+      <button
+        type="button"
+        @click="needs2FA = false"
+        class="w-full text-sm text-gray-400 hover:text-gray-300 transition"
+      >
+        Назад ко входу
+      </button>
+    </form>
+
+    <!-- ===== ОБЫЧНАЯ ФОРМА ВХОДА ===== -->
+    <form v-else @submit.prevent="handleLogin" class="space-y-5">
       <!-- Email -->
       <div class="space-y-1">
         <label for="email" class="block text-sm font-medium text-gray-200"
@@ -160,7 +281,8 @@ const handleLogin = async () => {
       </button>
     </form>
 
-    <div class="mt-6 text-center text-sm text-gray-300">
+    <!-- Ссылка на регистрацию (только на шаге логина) -->
+    <div v-if="!needs2FA" class="mt-6 text-center text-sm text-gray-300">
       Нет аккаунта?
       <NuxtLink
         to="/auth/register"

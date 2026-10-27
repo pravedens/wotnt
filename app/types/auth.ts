@@ -32,7 +32,8 @@ export interface AuthUser {
 }
 
 export interface LoginResponse {
-  two_factor: boolean;
+  two_factor?: boolean;
+  [key: string]: any;
 }
 
 export interface ForgotPasswordResponse {
