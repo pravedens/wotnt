@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AuthUser } from "~/types/auth";
 import QrcodeVue from "qrcode.vue";
+import { useAuthValidation } from "~/composables/useAuthValidation";
 
 definePageMeta({
   layout: "default",
@@ -15,6 +16,7 @@ const TOTAL_SECONDS = 15 * 60; // 15 минут
 const { user, refreshIdentity } = useSanctumAuth<AuthUser>();
 const client = useSanctumClient();
 const banners = useBanners();
+const validation = useAuthValidation();
 
 // --- Состояние для формы профиля ---
 const isSaving = ref(false);
@@ -311,6 +313,99 @@ onBeforeUnmount(async () => {
     }
   }
 });
+
+// --- Состояние для смены пароля ---
+const isPasswordModalOpen = ref(false);
+const isChangingPassword = ref(false);
+const showPasswords = ref(false);
+const passwordForm = reactive({
+  current_password: "",
+  password: "",
+  password_confirmation: "",
+});
+const passwordErrors = ref<Record<string, string[]>>({});
+
+// Словарь для перевода ошибок Laravel/Fortify на русский
+const passwordErrorMessages: Record<string, string> = {
+  current_password: "Неверный текущий пароль.",
+  password:
+    "Пароль не соответствует требованиям безопасности (минимум 8 символов).",
+  password_confirmation: "Пароли не совпадают.",
+};
+
+const openPasswordModal = () => {
+  passwordForm.current_password = "";
+  passwordForm.password = "";
+  passwordForm.password_confirmation = "";
+  passwordErrors.value = {};
+  isPasswordModalOpen.value = true;
+};
+
+const updatePassword = async () => {
+  passwordErrors.value = {};
+
+  // 1. Клиентская валидация (используем ваш композабл)
+  const clientErrors = validation.validatePassword(passwordForm.password);
+  const confirmErrors = validation.validatePasswordConfirmation(
+    passwordForm.password,
+    passwordForm.password_confirmation,
+  );
+
+  if (clientErrors) {
+    banners.error(clientErrors, { title: "Новый пароль" });
+    return;
+  }
+  if (confirmErrors) {
+    banners.error(confirmErrors, { title: "Подтверждение" });
+    return;
+  }
+
+  isChangingPassword.value = true;
+
+  try {
+    await client("/user/password", {
+      method: "PUT",
+      headers: { Accept: "application/json" },
+      body: {
+        current_password: passwordForm.current_password,
+        password: passwordForm.password,
+        password_confirmation: passwordForm.password_confirmation,
+      },
+    });
+
+    banners.success("Пароль успешно изменен!");
+    isPasswordModalOpen.value = false;
+  } catch (err: any) {
+    const errors = err.response?._data?.errors;
+
+    if (errors) {
+      passwordErrors.value = errors;
+
+      // Выводим ошибки через ваши баннеры на русском
+      for (const [field, messages] of Object.entries(errors)) {
+        const fieldLabel =
+          field === "current_password"
+            ? "Текущий пароль"
+            : field === "password"
+              ? "Новый пароль"
+              : "Ошибка";
+
+        // Пытаемся перевести ошибку, если не получается — берем как есть
+        const message =
+          passwordErrorMessages[field] ||
+          (messages as string[])[0] ||
+          "Ошибка валидации пароля";
+        banners.error(message, { title: fieldLabel });
+      }
+    } else {
+      banners.error(
+        err.response?._data?.message ?? "Не удалось изменить пароль.",
+      );
+    }
+  } finally {
+    isChangingPassword.value = false;
+  }
+};
 </script>
 
 <template>
@@ -410,6 +505,7 @@ onBeforeUnmount(async () => {
             </p>
             <button
               type="button"
+              @click="openPasswordModal"
               class="w-full py-2 px-4 rounded-lg text-sm font-semibold text-gray-200 border border-white/20 hover:text-white hover:bg-white/10 transition"
             >
               Сменить пароль
@@ -721,5 +817,125 @@ onBeforeUnmount(async () => {
         </div>
       </div>
     </div>
+    <!-- Модальное окно смены пароля -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="isPasswordModalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          @click.self="isPasswordModalOpen = false"
+        >
+          <div
+            class="w-full max-w-md rounded-2xl bg-[#1e1b4b] border border-white/10 shadow-2xl p-6"
+          >
+            <h3 class="text-xl font-bold text-white mb-4">Смена пароля</h3>
+
+            <!-- ✅ autocomplete="off" запрещает браузеру подставлять данные -->
+            <form
+              @submit.prevent="updatePassword"
+              class="space-y-4"
+              autocomplete="off"
+            >
+              <!-- Скрытые поля-приманки для браузера -->
+              <div style="display: none" aria-hidden="true">
+                <input type="text" name="fakeusernameremembered" />
+                <input type="password" name="fakepasswordremembered" />
+              </div>
+              <!-- Текущий пароль -->
+              <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1"
+                  >Текущий пароль</label
+                >
+                <input
+                  v-model="passwordForm.current_password"
+                  :type="showPasswords ? 'text' : 'password'"
+                  required
+                  autocomplete="off"
+                  class="w-full px-3 py-2 rounded bg-gray-50 text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  :class="{
+                    'border-red-500 ring-1 ring-red-500':
+                      passwordErrors.current_password,
+                  }"
+                />
+              </div>
+
+              <!-- Новый пароль -->
+              <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1"
+                  >Новый пароль</label
+                >
+                <input
+                  v-model="passwordForm.password"
+                  :type="showPasswords ? 'text' : 'password'"
+                  required
+                  autocomplete="new-password"
+                  class="w-full px-3 py-2 rounded bg-gray-50 text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  :class="{
+                    'border-red-500 ring-1 ring-red-500':
+                      passwordErrors.password,
+                  }"
+                />
+              </div>
+
+              <!-- Подтверждение -->
+              <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1"
+                  >Повторите новый пароль</label
+                >
+                <input
+                  v-model="passwordForm.password_confirmation"
+                  :type="showPasswords ? 'text' : 'password'"
+                  required
+                  autocomplete="new-password"
+                  class="w-full px-3 py-2 rounded bg-gray-50 text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              <!-- Чекбокс показать пароли -->
+              <div class="flex items-center gap-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="show-pass"
+                  v-model="showPasswords"
+                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label
+                  for="show-pass"
+                  class="text-xs text-gray-300 cursor-pointer"
+                  >Показать пароли</label
+                >
+              </div>
+
+              <!-- Кнопки -->
+              <div
+                class="flex justify-end gap-3 mt-6 pt-4 border-t border-white/10"
+              >
+                <button
+                  type="button"
+                  @click="isPasswordModalOpen = false"
+                  class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  :disabled="isChangingPassword"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg disabled:opacity-50 transition"
+                >
+                  {{ isChangingPassword ? "Сохранение..." : "Сохранить" }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

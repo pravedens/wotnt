@@ -158,8 +158,7 @@ const handleTwoFactor = async () => {
     <form v-if="needs2FA" @submit.prevent="handleTwoFactor" class="space-y-5">
       <div class="mt-4 pt-3 border-t border-blue-500/30">
         <p class="opacity-90">
-          вводите email и пароль. Но после этого сайт попросит
-          <strong>6-значный код</strong>. Откройте приложение на телефоне,
+          Откройте приложение на телефоне,
           найдите в списке "Другие сервисы" наш сайт и введите цифры, которые
           там показаны. Код меняется каждые 30 секунд — если не успели, просто
           подождите новый.
