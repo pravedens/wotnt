@@ -16,6 +16,7 @@ let countdownInterval: ReturnType<typeof setInterval> | null = null;
 const TOTAL_SECONDS = 15 * 60; // 15 минут
 
 const { user, refreshIdentity } = useSanctumAuth<AuthUser>();
+const config = useRuntimeConfig(); // ✅ Получаем доступ к переменным окружения
 
 const client = useSanctumClient();
 const banners = useBanners();
@@ -53,8 +54,8 @@ const executeAddPasskey = async () => {
     await Passkeys.register({
       name: deviceName,
       routes: {
-        options: "https://api.wotnt.test:8443/user/passkeys/options",
-        submit: "https://api.wotnt.test:8443/user/passkeys",
+        options: `${config.public.apiBase}/user/passkeys/options`,
+        submit: `${config.public.apiBase}/user/passkeys`,
       },
     });
 

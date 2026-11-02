@@ -6,13 +6,14 @@ const { user, refreshIdentity } = useSanctumAuth();
 
 const status = ref<'loading' | 'success' | 'error'>('loading');
 const message = ref('Подтверждаем ваш email...');
+const config = useRuntimeConfig(); // ✅ Получаем доступ к переменным окружения
 
 onMounted(async () => {
   try {
     const { id, hash } = route.params;
     const { expires, signature } = route.query;
 
-    const apiUrl = `https://api.wotnt.test:8443/email/verify/${id}/${hash}?expires=${expires}&signature=${signature}`;
+    const apiUrl = `${config.public.apiBase}/email/verify/${id}/${hash}?expires=${expires}&signature=${signature}`;
 
     const response = await fetch(apiUrl, {
       method: 'GET',

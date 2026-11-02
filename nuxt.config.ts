@@ -67,9 +67,17 @@ export default defineNuxtConfig({
     },
   },
 
+  runtimeConfig: {
+    public: {
+      // Значения по умолчанию (для локальной разработки)
+      apiBase: 'https://api.wotnt.test:8443',
+      frontendBase: 'https://wotnt.test:8443',
+    },
+  },
+
   sanctum: {
-    baseUrl: "https://api.wotnt.test:8443",
-    origin: "https://wotnt.test:8443",
+    baseUrl: process.env.NUXT_PUBLIC_API_BASE || 'https://api.wotnt.test:8443',
+    origin: process.env.NUXT_PUBLIC_FRONTEND_BASE || 'https://wotnt.test:8443',
     mode: "cookie",
     endpoints: {
       login: "/login",

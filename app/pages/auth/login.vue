@@ -11,6 +11,7 @@ definePageMeta({
 const { refreshIdentity } = useSanctumAuth<AuthUser>();
 const client = useSanctumClient(); // ✅ Прямые запросы к API
 const router = useRouter();
+const config = useRuntimeConfig(); // ✅ Получаем доступ к переменным окружения
 
 const banners = useBanners();
 const validation = useAuthValidation();
@@ -60,8 +61,8 @@ const loginWithPasskey = async () => {
     // ✅ Указываем полные URL до вашего API
     await Passkeys.verify({
       routes: {
-        options: 'https://api.wotnt.test:8443/passkeys/login/options',
-        submit: 'https://api.wotnt.test:8443/passkeys/login',
+        options: `${config.public.apiBase}/passkeys/login/options`,
+        submit: `${config.public.apiBase}/passkeys/login`,
       }
     });
     
