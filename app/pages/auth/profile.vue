@@ -2,6 +2,8 @@
 import type { AuthUser } from "~/types/auth";
 import QrcodeVue from "qrcode.vue";
 import { useAuthValidation } from "~/composables/useAuthValidation";
+import { usePasskeyRegister } from "@laravel/passkeys/vue";
+import { Passkeys } from "@laravel/passkeys";
 
 definePageMeta({
   layout: "default",
@@ -14,15 +16,55 @@ let countdownInterval: ReturnType<typeof setInterval> | null = null;
 const TOTAL_SECONDS = 15 * 60; // 15 минут
 
 const { user, refreshIdentity } = useSanctumAuth<AuthUser>();
+
 const client = useSanctumClient();
 const banners = useBanners();
 const validation = useAuthValidation();
+
+// ✅ Просто разрешаем передачу кук (Sanctum)
+Passkeys.configure({
+  fetch: {
+    credentials: "include",
+  },
+});
 
 // --- Состояние для формы профиля ---
 const isSaving = ref(false);
 const isUploading = ref(false);
 const avatarFile = ref<File | null>(null);
 const consentGiven = ref(false);
+const is2FAInfoOpen = ref(false);
+const pendingAction = ref<"passkey" | "2fa" | null>(null);
+
+const { register: registerPasskey, isLoading: isRegisteringPasskey } =
+  usePasskeyRegister();
+
+// Кнопка "Добавить ключ" теперь вызывает запрос подтверждения
+const addPasskey = () => {
+  requestPasswordConfirmation("passkey");
+};
+
+// Сама логика добавления (вызывается после успешного подтверждения)
+const executeAddPasskey = async () => {
+  try {
+    const deviceName = `Устройство ${new Date().toLocaleDateString()}`;
+
+    // Запрос уйдет на правильный домен с credentials: 'include'
+    await Passkeys.register({
+      name: deviceName,
+      routes: {
+        options: "https://api.wotnt.test:8443/user/passkeys/options",
+        submit: "https://api.wotnt.test:8443/user/passkeys",
+      },
+    });
+
+    banners.success("Ключ доступа успешно добавлен! 2FA отключена.");
+    await refreshIdentity();
+  } catch (e: any) {
+    console.error(e);
+    banners.error(e.message || "Не удалось добавить ключ доступа.");
+  }
+};
 
 const form = reactive({
   last_name: "",
@@ -180,13 +222,15 @@ const enable2FA = async () => {
     qrCodeUrl.value = qr.url || "";
     is2FAEnabled.value = true;
     await refreshIdentity();
-
-    // ✅ Запускаем таймер на 15 минут
     startTwoFactorTimer();
-
     banners.success("Сканируйте QR-код в приложении и подтвердите код.");
   } catch (err: any) {
-    banners.error(err.response?._data?.message ?? "Не удалось включить 2FA.");
+    // ✅ Если требуется подтверждение пароля (423 Locked)
+    if (err.response?.status === 423) {
+      requestPasswordConfirmation("2fa");
+    } else {
+      banners.error(err.response?._data?.message ?? "Не удалось включить 2FA.");
+    }
   } finally {
     isLoading2FA.value = false;
   }
@@ -339,6 +383,47 @@ const openPasswordModal = () => {
   passwordForm.password_confirmation = "";
   passwordErrors.value = {};
   isPasswordModalOpen.value = true;
+};
+
+// --- Состояние для подтверждения пароля (Passkeys) ---
+const isConfirmPassModalOpen = ref(false);
+const confirmPasswordInput = ref("");
+const isConfirmingPass = ref(false);
+
+// Открытие модалки
+const requestPasswordConfirmation = (action: "passkey" | "2fa") => {
+  pendingAction.value = action;
+  confirmPasswordInput.value = "";
+  isConfirmPassModalOpen.value = true;
+};
+
+// Отправка пароля
+const submitPasswordConfirmation = async () => {
+  if (!confirmPasswordInput.value) return;
+  isConfirmingPass.value = true;
+
+  try {
+    // 1. Отправляем пароль в Fortify
+    await client("/user/confirm-password", {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      body: { password: confirmPasswordInput.value },
+    });
+
+    isConfirmPassModalOpen.value = false;
+
+    // 2. Выполняем то действие, которое было заблокировано
+    if (pendingAction.value === "passkey") {
+      await executeAddPasskey();
+    } else if (pendingAction.value === "2fa") {
+      await enable2FA(); // Теперь сессия подтверждена, 423 ошибки не будет
+    }
+  } catch (err: any) {
+    banners.error("Неверный пароль. Попробуйте снова.");
+  } finally {
+    isConfirmingPass.value = false;
+    pendingAction.value = null; // Сбрасываем состояние
+  }
 };
 
 const updatePassword = async () => {
@@ -514,6 +599,35 @@ const updatePassword = async () => {
 
           <div class="border-t border-white/10"></div>
 
+          <div class="border-t border-white/10 pt-6 mt-6">
+            <p class="text-sm font-medium text-white mb-3">
+              Ключи доступа (Passkeys)
+            </p>
+
+            <div
+              v-if="user?.has_passkeys"
+              class="text-sm text-emerald-300 mb-3"
+            >
+              ✅ У вас добавлен ключ доступа. Вход по паролю и 2FA отключен.
+            </div>
+            <div v-else class="text-sm text-gray-400 mb-3">
+              Входите без пароля с помощью отпечатка пальца или Face ID.
+            </div>
+
+            <button
+              v-if="!user?.has_passkeys"
+              @click="addPasskey"
+              :disabled="isRegisteringPasskey"
+              class="w-full py-2 px-4 rounded-lg text-sm font-semibold text-gray-200 border border-white/20 hover:bg-white/10 transition"
+            >
+              {{
+                isRegisteringPasskey ? "Добавление..." : "Добавить ключ доступа"
+              }}
+            </button>
+          </div>
+
+          <div class="border-t border-white/10"></div>
+
           <!-- === 2FA === -->
           <div>
             <p class="text-sm font-medium text-white mb-3">
@@ -522,13 +636,41 @@ const updatePassword = async () => {
 
             <!-- Состояние: 2FA не включена -->
             <template v-if="!is2FAEnabled">
+              <!-- ✅ Кнопка-заголовок для разворачивания -->
               <div
-                class="mt-4 p-5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-100"
+                class="mt-4 p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-100 cursor-pointer select-none hover:bg-blue-500/20 transition"
+                @click="is2FAInfoOpen = !is2FAInfoOpen"
               >
-                <h3 class="font-bold text-base mb-3 text-white">
-                  🔐 Как работает двухфакторная аутентификация (2FA)?
-                </h3>
+                <div class="flex items-center justify-between">
+                  <h3
+                    class="font-bold text-base text-white flex items-center gap-2"
+                  >
+                    🔐 Как работает двухфакторная аутентификация (2FA)?
+                  </h3>
+                  <!-- Иконка стрелочки, меняется при клике -->
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-5 h-5 transition-transform duration-200"
+                    :class="{ 'rotate-180': is2FAInfoOpen }"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
 
+              <!-- ✅ Сама инструкция (скрыта/показана) -->
+              <div
+                v-if="is2FAInfoOpen"
+                class="mt-2 p-5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-blue-100"
+              >
                 <p class="mb-3 opacity-90">
                   Это дополнительный уровень защиты. Даже если кто-то узнает ваш
                   пароль, он не сможет войти в аккаунт без кода с вашего
@@ -556,12 +698,24 @@ const updatePassword = async () => {
                     войти в аккаунт.
                   </li>
                 </ol>
+
+                <!-- ✅ Кнопка "Свернуть" в конце инструкции -->
+                <div class="mt-4 flex justify-end">
+                  <button
+                    type="button"
+                    @click="is2FAInfoOpen = false"
+                    class="text-xs font-semibold text-blue-300 hover:text-white transition"
+                  >
+                    Свернуть инструкцию ↑
+                  </button>
+                </div>
               </div>
+
               <button
                 type="button"
                 @click="enable2FA"
                 :disabled="isLoading2FA"
-                class="w-full py-2 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg disabled:opacity-50 transition"
+                class="w-full py-2 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg disabled:opacity-50 transition mt-4"
               >
                 {{ isLoading2FA ? "Включение..." : "Включить 2FA" }}
               </button>
@@ -930,6 +1084,74 @@ const updatePassword = async () => {
                   class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg disabled:opacity-50 transition"
                 >
                   {{ isChangingPassword ? "Сохранение..." : "Сохранить" }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Модальное окно подтверждения пароля для Passkey -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="isConfirmPassModalOpen"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          @click.self="isConfirmPassModalOpen = false"
+        >
+          <div
+            class="w-full max-w-sm rounded-2xl bg-[#1e1b4b] border border-white/10 shadow-2xl p-6"
+          >
+            <h3 class="text-xl font-bold text-white mb-2">
+              Подтверждение пароля
+            </h3>
+            <p class="text-xs text-gray-300 mb-4">
+              В целях безопасности введите текущий пароль, чтобы
+              <span v-if="pendingAction === 'passkey'"
+                >добавить ключ доступа</span
+              >
+              <span v-else-if="pendingAction === '2fa'"
+                >включить двухфакторную аутентификацию</span
+              >
+              .
+            </p>
+
+            <form
+              @submit.prevent="submitPasswordConfirmation"
+              class="space-y-4"
+            >
+              <div>
+                <input
+                  v-model="confirmPasswordInput"
+                  type="password"
+                  placeholder="Текущий пароль"
+                  required
+                  autocomplete="off"
+                  class="w-full px-3 py-2 rounded bg-gray-50 text-gray-900 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div class="flex justify-end gap-3 mt-4">
+                <button
+                  type="button"
+                  @click="isConfirmPassModalOpen = false"
+                  class="px-4 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  :disabled="isConfirmingPass"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 shadow-lg disabled:opacity-50 transition"
+                >
+                  {{ isConfirmingPass ? "Проверка..." : "Подтвердить" }}
                 </button>
               </div>
             </form>

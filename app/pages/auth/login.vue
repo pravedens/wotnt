@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AuthUser, LoginResponse } from "~/types/auth";
+import { Passkeys } from "@laravel/passkeys";
 
 definePageMeta({
   layout: "auth",
@@ -13,11 +14,19 @@ const router = useRouter();
 
 const banners = useBanners();
 const validation = useAuthValidation();
+const isPasskeyLoading = ref(false);
 
 const form = reactive({
   email: "",
   password: "",
   remember: false,
+});
+
+// ✅ Настраиваем fetch для передачи кук (включая XSRF-TOKEN)
+Passkeys.configure({
+  fetch: {
+    credentials: 'include',
+  },
 });
 
 const errors = ref<Record<string, string[]>>({});
@@ -42,6 +51,27 @@ const showErrorsAsBanners = (errs: Record<string, string[]>) => {
       const fieldLabel = fieldLabels[field] ?? field;
       banners.error(messages[0]!, { title: fieldLabel });
     }
+  }
+};
+
+const loginWithPasskey = async () => {
+  isPasskeyLoading.value = true;
+  try {
+    // ✅ Указываем полные URL до вашего API
+    await Passkeys.verify({
+      routes: {
+        options: 'https://api.wotnt.test:8443/passkeys/login/options',
+        submit: 'https://api.wotnt.test:8443/passkeys/login',
+      }
+    });
+    
+    // Если успешно — обновляем данные пользователя и редиректим
+    await refreshIdentity();
+    await router.push('/dashboard');
+  } catch (e: any) {
+    console.warn('Вход по ключу отменён или не удался', e);
+  } finally {
+    isPasskeyLoading.value = false;
   }
 };
 
@@ -158,10 +188,9 @@ const handleTwoFactor = async () => {
     <form v-if="needs2FA" @submit.prevent="handleTwoFactor" class="space-y-5">
       <div class="mt-4 pt-3 border-t border-blue-500/30">
         <p class="opacity-90">
-          Откройте приложение на телефоне,
-          найдите в списке "Другие сервисы" наш сайт и введите цифры, которые
-          там показаны. Код меняется каждые 30 секунд — если не успели, просто
-          подождите новый.
+          Откройте приложение на телефоне, найдите в списке "Другие сервисы" наш
+          сайт и введите цифры, которые там показаны. Код меняется каждые 30
+          секунд — если не успели, просто подождите новый.
         </p>
         <p class="mt-2 opacity-90">
           <strong>Если потеряли телефон:</strong> на странице ввода кода вместо
@@ -247,6 +276,30 @@ const handleTwoFactor = async () => {
         <span v-if="errors.password" class="text-xs text-red-300 block">{{
           errors.password[0]
         }}</span>
+      </div>
+
+      <div class="mt-4">
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-600"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-[#1e1b4b] text-gray-400">Или</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          @click="loginWithPasskey"
+          :disabled="isPasskeyLoading"
+          class="mt-4 w-full py-3 px-4 rounded-lg font-semibold text-gray-200 border border-white/20 hover:text-white hover:bg-white/10 transition disabled:opacity-50"
+        >
+          {{
+            isPasskeyLoading
+              ? "Вход..."
+              : "Войти с помощью ключа доступа (Passkey)"
+          }}
+        </button>
       </div>
 
       <div class="flex items-center justify-between text-sm">

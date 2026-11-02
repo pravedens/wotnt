@@ -21,6 +21,9 @@ export interface AuthUser {
   about: string | null;
   marital_status: 'single' | 'married' | 'divorced' | 'widowed' | null;
   gender: 'male' | 'female' | null;
+  two_factor_enabled?: boolean;
+  two_factor_confirmed?: boolean;
+  has_passkeys?: boolean;
 
   // --- Аватар и согласие ---
   avatar_url: string | null; // Бэкенд отдает готовый URL (через аксессор)

@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@laravel/passkeys": "^0.4.0",
     "@vite-pwa/nuxt": "^1.1.1",
     "h3": "^1.15.11",
     "nuxt": "4.5.2",
