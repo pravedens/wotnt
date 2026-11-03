@@ -26,7 +26,7 @@ const form = reactive({
 // ✅ Настраиваем fetch для передачи кук (включая XSRF-TOKEN)
 Passkeys.configure({
   fetch: {
-    credentials: 'include',
+    credentials: "include",
   },
 });
 
@@ -58,19 +58,42 @@ const showErrorsAsBanners = (errs: Record<string, string[]>) => {
 const loginWithPasskey = async () => {
   isPasskeyLoading.value = true;
   try {
+    await client("/sanctum/csrf-cookie", { method: "GET" });
     // ✅ Указываем полные URL до вашего API
     await Passkeys.verify({
       routes: {
         options: `${config.public.apiBase}/passkeys/login/options`,
         submit: `${config.public.apiBase}/passkeys/login`,
-      }
+      },
     });
-    
+
     // Если успешно — обновляем данные пользователя и редиректим
     await refreshIdentity();
-    await router.push('/dashboard');
+    await router.push("/dashboard");
   } catch (e: any) {
-    console.warn('Вход по ключу отменён или не удался', e);
+    console.warn("Вход по ключу не удался", e);
+
+    // ✅ Проверяем сообщение об ошибке, которое вернула библиотека
+    const errorMessage = e.message || "";
+
+    if (
+      errorMessage.includes("Passkey not recognized") ||
+      errorMessage.includes("422")
+    ) {
+      banners.error(
+        "Ключ доступа не найден. Добавить ключ можно только в личном кабинете после регистрации, подтверждения почты и согласия на обработку персональных данных.",
+        { title: "Вход невозможен", persistent: true, timeout: 20000 },
+      );
+    } else if (
+      e.name === "NotAllowedError" ||
+      e.name === "UserCancelledError"
+    ) {
+      // Пользователь просто закрыл окно — не показываем страшную ошибку
+    } else {
+      banners.error(
+        "Не удалось выполнить вход по ключу доступа. Попробуйте войти по паролю.",
+      );
+    }
   } finally {
     isPasskeyLoading.value = false;
   }

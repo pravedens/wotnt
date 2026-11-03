@@ -186,6 +186,9 @@ const saveProfile = async () => {
     }
 
     if (!consentGiven.value) {
+      is2FAEnabled.value = false;
+      is2FAConfirmed.value = false;
+      clearTwoFactorTimer();
       banners.success("Согласие отозвано. Данные профиля и фото удалены.");
     } else {
       banners.success("Профиль обновлён!");
