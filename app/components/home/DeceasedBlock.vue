@@ -11,7 +11,7 @@ defineProps<{
   <section 
     class="rounded-3xl backdrop-blur-md border border-white/10 p-8"
     :style="{ 
-      backgroundColor: settings.bg_color, 
+      backgroundColor: `color-mix(in srgb, ${settings.bg_color} 40%, transparent)`,
       color: settings.text_color,
       fontFamily: settings.font_family 
     }"

@@ -19,6 +19,7 @@ export interface HolidayStyles {
 export interface Holiday {
   title: string;
   date: string;
+  end_date: string | null;
   description: string;
   image_url: string | null;
   styles: HolidayStyles;

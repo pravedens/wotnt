@@ -2,30 +2,24 @@
 import type { HomepageResponse } from "~/types/home";
 import type { AuthUser } from "~/types/auth";
 
-const { user, refreshIdentity } = useSanctumAuth<AuthUser>(); // ✅ Достаем refreshIdentity
-const client = useSanctumClient(); // ✅ Используем клиент Sanctum
+const { user } = useSanctumAuth<AuthUser>();
+const client = useSanctumClient();
 
-const isAuthed = computed(() => !!user.value);
+const isAuthed = computed(() => Boolean(user.value));
 
-const homepageData = ref<HomepageResponse | null>(null);
-const isLoading = ref(true);
-
-onMounted(async () => {
-  try {
-    // ✅ Если пользователь не загружен, пробуем подтянуть его (сессия по кукам)
-    if (!user.value) {
-      await refreshIdentity();
-    }
-
-    // ✅ Используем client, он автоматически подставит baseUrl и credentials
-    const response = await client<HomepageResponse>("/api/homepage");
-    homepageData.value = response;
-  } catch (error) {
-    console.error("Не удалось загрузить данные", error);
-  } finally {
-    isLoading.value = false;
-  }
-});
+const {
+  data: homepageData,
+  pending: isLoading,
+  error: homepageError,
+  refresh: refreshHomepage,
+} = await useAsyncData(
+  "homepage-data",
+  () => client<HomepageResponse>("/api/homepage"),
+  {
+    server: true,
+    lazy: true,
+  },
+);
 </script>
 
 <template>
@@ -59,6 +53,21 @@ onMounted(async () => {
     <!-- Данные -->
     <div v-if="isLoading" class="text-center text-gray-400 py-10">
       Загрузка...
+    </div>
+
+    <div
+      v-else-if="homepageError"
+      class="text-center p-8 rounded-2xl border border-red-500/20 bg-red-500/10"
+    >
+      <p class="text-red-300">Не удалось загрузить данные главной страницы.</p>
+
+      <button
+        type="button"
+        class="mt-4 text-blue-400 hover:underline"
+        @click="refreshHomepage()"
+      >
+        Повторить
+      </button>
     </div>
 
     <template v-else-if="homepageData">
