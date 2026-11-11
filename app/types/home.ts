@@ -43,4 +43,5 @@ export interface HomepageResponse {
     birthdays: HomepageSetting;
     deceased: HomepageSetting;
   };
+  show_personal_blocks: boolean;
 }

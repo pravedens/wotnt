@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AuthUser } from "~/types/auth";
+import type { HomepageResponse } from "~/types/home";
 
 definePageMeta({
   middleware: "sanctum:auth",
@@ -8,6 +9,12 @@ definePageMeta({
 const { user, logout, refreshIdentity } = useSanctumAuth<AuthUser>();
 const banners = useBanners();
 const client = useSanctumClient();
+
+const { data: dashboardData } = await useAsyncData(
+  "dashboard-data",
+  () => client<HomepageResponse>("/api/homepage"),
+  { lazy: true },
+);
 
 const refreshing = ref(false);
 const EMAIL_UNVERIFIED_KEY = "email-unverified";
@@ -165,7 +172,7 @@ const handleLogout = async () => {
 
     <!-- Карточка статуса аккаунта -->
     <div
-      class="rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-6 sm:p-8"
+      class="rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 p-6 sm:p-8 mb-6"
     >
       <h2 class="text-lg font-semibold text-white mb-4">Статус аккаунта</h2>
 
@@ -272,6 +279,21 @@ const handleLogout = async () => {
           </button>
         </div>
       </div>
+    </div>
+
+    <!-- Блоки дней рождения и ушедших -->
+    <div
+      v-if="dashboardData?.show_personal_blocks"
+      class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6"
+    >
+      <HomeBirthdaysBlock
+        :birthdays="dashboardData.birthdays"
+        :settings="dashboardData.settings.birthdays"
+      />
+      <HomeDeceasedBlock
+        :deceased="dashboardData.deceased"
+        :settings="dashboardData.settings.deceased"
+      />
     </div>
   </div>
 </template>
