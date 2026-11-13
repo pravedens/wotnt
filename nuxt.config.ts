@@ -13,7 +13,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: ["nuxt-auth-sanctum", "@nuxtjs/tailwindcss", "@vite-pwa/nuxt"],
+  modules: ["nuxt-auth-sanctum", "@nuxtjs/tailwindcss", "@vite-pwa/nuxt", "@pinia/nuxt"],
 
   tailwindcss: {
     cssPath: "~/assets/css/tailwind.css",
@@ -72,6 +72,8 @@ export default defineNuxtConfig({
       // Значения по умолчанию (для локальной разработки)
       apiBase: 'https://api.wotnt.test:8443',
       frontendBase: 'https://wotnt.test:8443',
+      siteUrl: 'https://wotnt.test:8443',
+      storageUrl: 'https://storage.yandexcloud.net/wotgospel-media',
     },
   },
 
