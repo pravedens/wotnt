@@ -13,13 +13,15 @@
   </div>
 </template>
 
-<script setup>
-const config = useRuntimeConfig();
+<script setup lang="ts">
+import type { DailyVerse } from '~/types/home'
 
-const { data: verse, pending, error } = await useFetch('/api/daily-verse', {
+const config = useRuntimeConfig()
+
+const { data: verse, pending, error } = await useFetch<DailyVerse>('/api/daily-verse', {
   baseURL: config.public.apiBase,
   key: 'daily-verse',
-});
+})
 </script>
 
 <style scoped>

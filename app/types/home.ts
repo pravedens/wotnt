@@ -34,6 +34,12 @@ export interface HomepageSetting {
   font_family: string;
 }
 
+// 🆕 Стих дня
+export interface DailyVerse {
+  reference: string;
+  text: string;
+}
+
 export interface HomepageResponse {
   holiday: Holiday | null;
   birthdays: HomeUser[];
