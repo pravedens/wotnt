@@ -115,90 +115,9 @@
           </div>
         </SermonCollapsibleBlock>
 
-        <!-- Видео Rutube -->
-        <ClientOnly v-if="post.rutube">
-          <section
-            class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-8"
-          >
-            <h2 class="text-2xl font-semibold text-white mb-3">
-              Видео проповеди на Rutube
-            </h2>
-            <div class="aspect-video rounded-lg overflow-hidden">
-              <iframe
-                width="100%"
-                height="100%"
-                :src="`https://rutube.ru/play/embed/${post.rutube}`"
-                frameborder="0"
-                allow="clipboard-write; autoplay"
-                allowfullscreen
-                loading="lazy"
-                :title="`Видео проповеди: ${post.title}`"
-                referrerpolicy="strict-origin-when-cross-origin"
-                sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-presentation"
-              ></iframe>
-            </div>
-          </section>
-          <template #fallback>
-            <div class="aspect-video bg-white/5 rounded-lg animate-pulse"></div>
-          </template>
-        </ClientOnly>
+        <!-- Видео -->
 
-        <!-- Другие платформы -->
-        <section v-if="hasMediaLinks" class="mb-8">
-          <h2 class="text-2xl font-semibold text-white text-center mb-4">
-            Смотреть на других платформах
-          </h2>
-          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <a
-              v-if="post.youtube"
-              :href="post.youtube"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex flex-col items-center p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-all hover:scale-105 border border-white/20"
-              @click="trackExternalLink('YouTube')"
-            >
-              <img
-                class="h-10 mb-2"
-                src="/icons/Youtube_red.png"
-                alt="YouTube"
-                loading="lazy"
-              />
-              <span class="text-sm text-white">YouTube</span>
-            </a>
-            <a
-              v-if="post.dzen"
-              :href="post.dzen"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex flex-col items-center p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-all hover:scale-105 border border-white/20"
-              @click="trackExternalLink('Dzen')"
-            >
-              <img
-                class="h-10 mb-2"
-                src="/icons/dark-icon.png"
-                alt="Яндекс.Дзен"
-                loading="lazy"
-              />
-              <span class="text-sm text-white">Дзен</span>
-            </a>
-            <a
-              v-if="post.vkVideo"
-              :href="post.vkVideo"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="flex flex-col items-center p-4 bg-white/10 rounded-xl hover:bg-white/20 transition-all hover:scale-105 border border-white/20"
-              @click="trackExternalLink('VK')"
-            >
-              <img
-                class="h-10 mb-2"
-                src="/icons/vk_logo_icon_257028.png"
-                alt="VK Видео"
-                loading="lazy"
-              />
-              <span class="text-sm text-white">VK</span>
-            </a>
-          </div>
-        </section>
+        <SermonVideoPlayer v-if="post.video" :video="post.video" />
 
         <!-- Аудио -->
         <ClientOnly>
@@ -396,11 +315,6 @@ const backQuery = computed(() => {
   return q;
 });
 
-// --- Флаг наличия медиа ---
-const hasMediaLinks = computed(() =>
-  Boolean(post.value?.youtube || post.value?.dzen || post.value?.vkVideo),
-);
-
 watch(
   () => post.value?.id,
   async (id, _previousId, onCleanup) => {
@@ -457,8 +371,6 @@ const trackAudioPlay = () =>
   trackEvent("audio_play", { sermon_id: post.value?.id });
 const trackFileDownload = (type: string) =>
   trackEvent("file_download", { type, sermon_id: post.value?.id });
-const trackExternalLink = (platform: string) =>
-  trackEvent("external_link_click", { platform });
 
 // --- SEO ---
 useServerSeoMeta({

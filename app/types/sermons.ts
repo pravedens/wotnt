@@ -42,6 +42,13 @@ export interface PostComment {
   replies?: PostComment[]
 }
 
+export interface PostVideo {
+  platform: 'rutube' | 'vk'
+  url: string
+  can_view: boolean
+  message: string | null
+}
+
 export interface Post {
   id: number
   title: string
@@ -81,6 +88,7 @@ export interface Post {
   requires_consent?: boolean
   
   comments?: PostComment[]
+  video?: PostVideo | null 
 }
 
 export interface PaginatedResponse<T> {
