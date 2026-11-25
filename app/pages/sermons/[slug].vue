@@ -247,13 +247,22 @@ const fetchPost = async () => {
     post.value = response.data;
   } catch (err: any) {
     console.error("Ошибка загрузки:", err);
-    if (err?.status === 404) {
+
+    // 🔥 Обработка 403 (нет прав)
+    if (err?.status === 403) {
+      error.value = err.data?.message || "У вас нет прав на просмотр этой проповеди.";
+    } 
+    // Обработка 404 (не найдено)
+    else if (err?.status === 404) {
       throw createError({
         statusCode: 404,
         statusMessage: "Проповедь не найдена",
       });
+    } 
+    // Обработка остальных ошибок
+    else {
+      error.value = "Не удалось загрузить проповедь. Попробуйте позже.";
     }
-    error.value = "Не удалось загрузить проповедь.";
   } finally {
     pending.value = false;
   }
